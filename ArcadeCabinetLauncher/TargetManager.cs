@@ -5,12 +5,15 @@ namespace Button;
 
 public class TargetManager
 {
-	public List<Target> _targets = new List<Target>();
+	public List<Target> Targets => _targets;
+	private List<Target> _targets = new List<Target>();
 	public DirectoryInfo Directory;
+	public int SelectedIndex => _currentSelected;
 	private int _currentSelected;
 	public static Action<TargetManager> OnTargetListUpdated;
 	public static Action<int, Target> OnCurrentTargetChanged;
-	private Process _launchProcess;
+	private Process? _launchProcess;
+	public Target? CurrentlyPlaying;
 	public void InitializeFromDirectory(string directoryPath)
 	{
 		_targets.Clear();
@@ -33,6 +36,9 @@ public class TargetManager
 		{
 			Console.WriteLine("Found no exe files in {");
 		}
+
+		_targets = _targets.OrderByDescending(x => x.Title).ToList();
+
 		OnTargetListUpdated?.Invoke(this);
 	}
 
@@ -46,6 +52,7 @@ public class TargetManager
 		{
 			_currentSelected = (_currentSelected + _targets.Count) % _targets.Count;
 		}
+
 		OnCurrentTargetChanged?.Invoke(_currentSelected, _targets[_currentSelected]);
 	}
 
@@ -58,13 +65,16 @@ public class TargetManager
 		}
 		
 		var target = _targets[_currentSelected];
+		CurrentlyPlaying = target;
 		_launchProcess = Process.Start(target.ExectuableFile.FullName);
+		_launchProcess.EnableRaisingEvents = true;
 		_launchProcess.Exited += OnProcessExit;
 	}
 
 	public void OnProcessExit(object? sender, EventArgs eventArgs)
 	{
 		_launchProcess = null;
+		CurrentlyPlaying = null;
 	}
 }
 
