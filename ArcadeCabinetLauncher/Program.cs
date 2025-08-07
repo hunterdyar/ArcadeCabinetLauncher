@@ -36,14 +36,8 @@ namespace Button
 			Raylib.SetWindowFocused();
 			Raylib.ToggleBorderlessWindowed();
 			Raylib.MaximizeWindow();
-			var top = Raylib.IsWindowState(ConfigFlags.TopmostWindow);
-			if (top)
-			{
-				Raylib.ClearWindowState(ConfigFlags.TopmostWindow);
-				Console.WriteLine("should not be always on top!");
-			}
-			 
-
+			Raylib.ClearWindowState(ConfigFlags.TopmostWindow);
+			
 			
 			//run the loop
 			while (!Raylib.WindowShouldClose())

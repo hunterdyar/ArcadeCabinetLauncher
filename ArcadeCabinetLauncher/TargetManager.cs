@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Security.Cryptography;
+using LnkParser;
 using Raylib_cs;
 
 namespace Button;
@@ -63,13 +64,27 @@ public class TargetManager
 			_targets.Add(new Target()
 			{
 				ExectuableFile = executable,
-				Title = executable.Name,
+				Title = Path.GetFileNameWithoutExtension(executable.Name),
 			});
+			Console.WriteLine($"Found Exe: {executable.FullName}");
+
+		}
+
+		foreach (var executable in Directory.EnumerateFiles("*.lnk", SearchOption.AllDirectories))
+		{
+			var link = new WinShortcut(executable.FullName);
+			FileInfo source = new FileInfo(link.TargetPath);
+			_targets.Add(new Target()
+			{
+				ExectuableFile = source,
+				Title = Path.GetFileNameWithoutExtension(source.Name),
+			});
+			Console.WriteLine($"Found Linked: {source.FullName}");
 		}
 
 		if (_targets.Count == 0)
 		{
-			Console.WriteLine("Found no exe files in {");
+			Console.WriteLine($"-- Found no exe files in {Directory.FullName}");
 		}
 
 		_targets = _targets.OrderByDescending(x => x.ExectuableFile.LastWriteTime).ToList();
