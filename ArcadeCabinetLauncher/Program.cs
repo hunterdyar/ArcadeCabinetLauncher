@@ -11,7 +11,6 @@ namespace Button
 		
 		public static Font Font;
 
-
 		public static void Main(string[] args)
 		{
 			//Load Resource
@@ -34,13 +33,17 @@ namespace Button
 			//Prepare Program
 			InitWindow();
 			Raylib.SetWindowSize(Raylib.GetMonitorWidth(0), Raylib.GetMonitorHeight(0));
-			Raylib.SetWindowState(ConfigFlags.BorderlessWindowMode);
 			Raylib.SetWindowFocused();
-			
-			if (!Raylib.IsWindowFullscreen())
+			Raylib.ToggleBorderlessWindowed();
+			Raylib.MaximizeWindow();
+			var top = Raylib.IsWindowState(ConfigFlags.TopmostWindow);
+			if (top)
 			{
-				Raylib.ToggleBorderlessWindowed();
+				Raylib.ClearWindowState(ConfigFlags.TopmostWindow);
+				Console.WriteLine("should not be always on top!");
 			}
+			 
+
 			
 			//run the loop
 			while (!Raylib.WindowShouldClose())

@@ -40,16 +40,26 @@ public class TargetManager
 		_watcher.Created += WatcherOnCreated;
 		_watcher.Deleted += WatcherOnDeleted;
 		_watcher.Renamed += WatcherOnRenamed;
+		_watcher.Changed += WatcherOnChange;
+		_watcher.Error += (sender, args) =>
+		{
+			Console.WriteLine($"File Watcher error: {args.GetException().Message}");
+		};
+		
+		//do we need to call this?
+		_watcher.BeginInit();
 		RecreateTargets();
-
 	}
-
 
 	private void RecreateTargets()
 	{
 		_targets.Clear();
 		foreach (var executable in Directory.EnumerateFiles("*.exe", SearchOption.AllDirectories))
 		{
+			if (executable.FullName == Environment.ProcessPath)
+			{
+				continue;
+			}
 			_targets.Add(new Target()
 			{
 				ExectuableFile = executable,
@@ -63,6 +73,8 @@ public class TargetManager
 		}
 
 		_targets = _targets.OrderByDescending(x => x.ExectuableFile.LastWriteTime).ToList();
+		_currentSelected = _targets.Count - 1;
+		
 		OnTargetListUpdated?.Invoke(this);
 	}
 	public void Cycle(int delta)
@@ -113,6 +125,11 @@ public class TargetManager
 	}
 
 	private void WatcherOnCreated(object sender, FileSystemEventArgs e)
+	{
+		RecreateTargets();
+	}
+
+	private void WatcherOnChange(object sender, FileSystemEventArgs e)
 	{
 		RecreateTargets();
 	}
