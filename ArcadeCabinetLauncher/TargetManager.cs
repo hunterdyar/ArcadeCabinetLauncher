@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Security.Cryptography;
+using Raylib_cs;
 
 namespace Button;
 
@@ -14,21 +15,45 @@ public class TargetManager
 	public static Action<int, Target> OnCurrentTargetChanged;
 	private Process? _launchProcess;
 	public Target? CurrentlyPlaying;
+
+	private FileSystemWatcher _watcher;
 	public void InitializeFromDirectory(string directoryPath)
 	{
-		_targets.Clear();
 		var d = Path.GetFullPath(directoryPath);
 		Directory = new DirectoryInfo(d);
 		if (!Directory.Exists)
 		{
 			throw new Exception($"Invalid Directory: {directoryPath}");
 		}
+
+		_watcher = new FileSystemWatcher(Directory.FullName);
+		_watcher.EnableRaisingEvents = true;
+		_watcher.IncludeSubdirectories = true;
+		_watcher.NotifyFilter = NotifyFilters.Attributes
+		                                               | NotifyFilters.CreationTime
+		                                               | NotifyFilters.DirectoryName
+		                                               | NotifyFilters.FileName
+		                                               | NotifyFilters.LastAccess
+		                                               | NotifyFilters.LastWrite
+		                                               | NotifyFilters.Size;
+		_watcher.Filter = "*.exe";
+		_watcher.Created += WatcherOnCreated;
+		_watcher.Deleted += WatcherOnDeleted;
+		_watcher.Renamed += WatcherOnRenamed;
+		RecreateTargets();
+
+	}
+
+
+	private void RecreateTargets()
+	{
+		_targets.Clear();
 		foreach (var executable in Directory.EnumerateFiles("*.exe", SearchOption.AllDirectories))
 		{
 			_targets.Add(new Target()
 			{
 				ExectuableFile = executable,
-				Title = executable.Name
+				Title = executable.Name,
 			});
 		}
 
@@ -37,11 +62,9 @@ public class TargetManager
 			Console.WriteLine("Found no exe files in {");
 		}
 
-		_targets = _targets.OrderByDescending(x => x.Title).ToList();
-
+		_targets = _targets.OrderByDescending(x => x.ExectuableFile.LastWriteTime).ToList();
 		OnTargetListUpdated?.Invoke(this);
 	}
-
 	public void Cycle(int delta)
 	{
 		_currentSelected += delta;
@@ -75,6 +98,23 @@ public class TargetManager
 	{
 		_launchProcess = null;
 		CurrentlyPlaying = null;
+		Raylib.SetWindowFocused();
+	}
+
+
+	private void WatcherOnRenamed(object sender, RenamedEventArgs e)
+	{
+		RecreateTargets();
+	}
+
+	private void WatcherOnDeleted(object sender, FileSystemEventArgs e)
+	{
+		RecreateTargets();
+	}
+
+	private void WatcherOnCreated(object sender, FileSystemEventArgs e)
+	{
+		RecreateTargets();
 	}
 }
 

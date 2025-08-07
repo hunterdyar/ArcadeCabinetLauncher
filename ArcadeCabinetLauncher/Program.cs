@@ -11,6 +11,7 @@ namespace Button
 		
 		public static Font Font;
 
+
 		public static void Main(string[] args)
 		{
 			//Load Resource
@@ -33,7 +34,9 @@ namespace Button
 			//Prepare Program
 			InitWindow();
 			Raylib.SetWindowSize(Raylib.GetMonitorWidth(0), Raylib.GetMonitorHeight(0));
-			Raylib.SetWindowState(ConfigFlags.UnfocusedWindow);
+			Raylib.SetWindowState(ConfigFlags.BorderlessWindowMode);
+			Raylib.SetWindowFocused();
+			
 			if (!Raylib.IsWindowFullscreen())
 			{
 				Raylib.ToggleBorderlessWindowed();
